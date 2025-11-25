@@ -1,1 +1,0 @@
-/home/arch-ab/.config/qtile/autostart.sh
