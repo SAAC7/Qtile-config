@@ -93,7 +93,7 @@ keys = [
     Key([mod],"c", lazy.group.prev_window(), desc="cambiar ventana"),
     Key([mod],"v", lazy.window.toggle_minimize(), desc="minimizar ventana"),
     Key(["mod1"], "n", lazy.spawn("dunstctl set-paused toggle"), desc="Toggle notifications"),
--   Key(["mod1"], "space", lazy.next_screen(), desc="Move to other screen"),
+    Key(["mod1"], "space", lazy.next_screen(), desc="Move to other screen"),
 
     # Bloqueador de pantalla
     # Key([mod,"shift"], "x", lazy.spawn("light-locker-command -l"), desc="Bloqueador de pantalla"),
@@ -156,10 +156,16 @@ for i in groups:
 
 layouts = [
     # layout.Columns(border_focus_stack=["#d75f5f", "#8f3d3d"], border_width=4),
-    layout.Columns(border_focus_stack="#81a1c1", border_focus="#5e81ac", border_normal="#4c566a", border_normal_stack="#3b4252", margin=2,border_width=2),
-    
+    layout.Columns(border_focus_stack="#81a1c1", 
+                   border_focus="#5e81ac", 
+                   border_normal="#4c566a", 
+                   border_normal_stack="#3b4252", 
+                   margin=4,
+                   border_width=3,
                 #    margin_on_single=10,
                 #    border_on_single=True,
+                   ),
+    
                    
     layout.Max(),
     # Try more layouts by unleashing below layouts.
