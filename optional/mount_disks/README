@@ -1,0 +1,4 @@
+copy and edit the following service
+
+cp ./mount_ntfs.service etc/systemd/system/mount_ntfs.service
+

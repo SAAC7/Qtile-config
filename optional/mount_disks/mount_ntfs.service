@@ -1,0 +1,13 @@
+[Unit]
+Description=Montar volumen NTFS al arranque
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/.Scripts/mount_ntfs.sh
+RemainAfterExit=yes
+Killmode=process
+TimeoutSec=0
+
+[Install]
+WantedBy=multi-user.target
