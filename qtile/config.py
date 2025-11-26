@@ -84,36 +84,34 @@ keys = [
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
-    #commands Proper
+
+
+    #Commands Proper
+    #General
     Key([mod], "m", lazy.spawn("rofi -show drun -show-icons "), desc="Rofi con iconos"),
-    #Key([mod,"shift"], "x", lazy.spawn("light-locker-command -l"), desc="Bloqueador de pantalla"),
     Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
     Key([mod],"c", lazy.group.prev_window(), desc="cambiar ventana"),
     Key([mod],"v", lazy.window.toggle_minimize(), desc="minimizar ventana"),
+    Key(["mod1"], "n", lazy.spawn("dunstctl set-paused toggle"), desc="Toggle notifications"),
+-   Key(["mod1"], "space", lazy.next_screen(), desc="Move to other screen"),
+
+    #Bloqueador de pantalla
+    #Key([mod,"shift"], "x", lazy.spawn("light-locker-command -l"), desc="Bloqueador de pantalla"),
+    Key(["mod1"], "l", lazy.spawn("i3lock -c 000000")),
+
     # Audio controls (requires pactl)
     Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +5%")),
     Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -5%")),
     Key([], "XF86AudioMute", lazy.spawn("pactl set-sink-mute @DEFAULT_SINK@ toggle")),
-    ## Controles de audio (PipeWire) con wpctl
+    # Controles de audio (PipeWire) con wpctl
     #Key([], "XF86AudioRaiseVolume", lazy.spawn("wpctl set-volume @DEFAULT_SINK@ +0.05"), desc="Subir volumen"),
     #Key([], "XF86AudioLowerVolume", lazy.spawn("wpctl set-volume @DEFAULT_SINK@ -0.05"), desc="Bajar volumen"),
     #Key([], "XF86AudioMute", lazy.spawn("wpctl set-mute @DEFAULT_SINK@ toggle"), desc="Silenciar / reactivar"),
 
     # Brightness controls (requires brightnessctl)
-    #Key([], "XF86MonBrightnessUp", lazy.spawn("brightnessctl set +10%")),
-    #Key([], "XF86MonBrightnessDown", lazy.spawn("brightnessctl set 10%-")),
     Key([], "XF86MonBrightnessUp", lazy.spawn("xbacklight -inc 5")),
     Key([], "XF86MonBrightnessDown", lazy.spawn("xbacklight -dec 5")),
 
-    
-    # Toggle touchpad (requires xinput; adjust device name)
-    #Key([mod], "t", lazy.spawn("bash -c 'status=$(xinput list-props '" + \
-    #          "'Your Touchpad Device Name'" + "' | grep 'Device Enabled' | awk '{print $4}'); \
-    #          "if [ $status -eq 1 ]; then xinput disable 'Your Touchpad Device Name'; \
-    #          "else xinput enable 'Your Touchpad Device Name'; fi'")),
-
-    # Lock screen (requires i3lock)
-    Key([mod], "x", lazy.spawn("i3lock -c 000000")),
 ]
 
 # Add key bindings to switch VTs in Wayland.
@@ -157,7 +155,16 @@ for i in groups:
     )
 
 layouts = [
-    layout.Columns(border_focus_stack=["#d75f5f", "#8f3d3d"], border_width=4),
+    # layout.Columns(border_focus_stack=["#d75f5f", "#8f3d3d"], border_width=4),
+    layout.Columns(
+                   border_focus_stack="#81a1c1",
+                   border_focus="#5e81ac",
+                   border_normal="#4c566a",
+                   border_normal_stack="#3b4252",
+                   margin=2,
+                #    margin_on_single=10,
+                #    border_on_single=True,
+                   border_width=2),
     layout.Max(),
     # Try more layouts by unleashing below layouts.
     # layout.Stack(num_stacks=2),
