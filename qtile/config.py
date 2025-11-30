@@ -33,7 +33,11 @@ from libqtile.utils import guess_terminal
 import os
 import subprocess
 from libqtile import hook
-from libqtile.widget import TextBox
+from libqtile.widget import TextBox,  Backlight,  Battery, PulseVolume
+
+import sys
+sys.path.insert(0, '~/PythonArch/lib/python3.11/site-packages')
+
 
 mod = "mod4"
 terminal = guess_terminal()
@@ -207,13 +211,24 @@ screens = [
                     },
                     name_transform=lambda name: name.upper(),
                 ),
+                PulseVolume(),
++		        Battery(format="{char}{percent:2.0%}", update_interval=30),
++		        widget.ThermalZone(
++		            format_crit='{temp}°C'
++		        ),
+                Backlight(backlight_name='intel_backlight'),
                 #widget.TextBox("default config", name="default"),
                 #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
                 # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
                 # widget.StatusNotifier(),
                 widget.Systray(),
                 widget.Volume(),
-                widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
+                widget.Clock(format="%Y-%m-%d %a %I:%M %p",
++                        mouse_callbacks={
++                        # botón izquierdo abre gsimplecal; cámbialo si usas otra app
++                        "Button1": lambda: qtile.cmd_spawn("gsimplecal")
++                        },
++               ),
                 widget.QuickExit(),
             ],
             24,
