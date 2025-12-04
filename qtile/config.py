@@ -188,47 +188,81 @@ widget_defaults = dict(
 )
 extension_defaults = widget_defaults.copy()
 
-screens = [
-    Screen(
-        top=bar.Bar(
-            [
-                #widget.CurrentLayout(),
-                widget.GroupBox(
-                    highlight_method="block",
-                    hide_unused=True,
-                    disable_drag=True,
-                    ),
-                widget.Prompt(),
-                #widget.WindowName(),
-                widget.WindowTabs(),
-                widget.Chord(
-                    chords_colors={
-                        "launch": ("#ff0000", "#ffffff"),
-                    },
-                    name_transform=lambda name: name.upper(),
-                ),
-                #widget.TextBox("default config", name="default"),
-                #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
-                # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
-                # widget.StatusNotifier(),
-                widget.Systray(),
-                widget.Volume(),
-                widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
-                widget.QuickExit(),
-            ],
-            24,
-            bacground='#ffffff', 
-            #opacity=0.8,
 
-            # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
-            # border_color=["ff00ff", "000000", "ff00ff", "000000"]  # Borders are magenta
-        ),
-        # You can uncomment this variable if you see that on X11 floating resize/moving is laggy
-        # By default we handle these events delayed to already improve performance, however your system might still be struggling
-        # This variable is set to None (no cap) by default, but you can set it to 60 to indicate that you limit it to 60 events per second
-        # x11_drag_polling_rate = 60,
-    ),
-]
+def get_monitors():
+    """Devuelve lista de monitores y cuál es principal."""
+    result = subprocess.run(["xrandr", "--listmonitors"], capture_output=True, text=True)
+    lines = result.stdout.splitlines()[1:]  # saltar "Monitors: N"
+    monitors = []
+    principal = None
+    for line in lines:
+        parts = line.split()
+        name = parts[-1]  # nombre de salida
+        if line.startswith("0: +*") or "+*" in line:
+            principal = name
+        monitors.append(name)
+    return monitors, principal
+
+monitors, main = get_monitors()
+
+screens = []
+
+for mon in monitors:
+    if mon == main:
+        screens.append(
+            Screen(
+                top=bar.Bar(
+                    [
+                        #widget.CurrentLayout(),
+                        widget.GroupBox(
+                            highlight_method="block",
+                            hide_unused=True,
+                            disable_drag=True,
+                            ),
+                        widget.Prompt(),
+                        #widget.WindowName(),
+                        widget.WindowTabs(),
+                        widget.Chord(
+                            chords_colors={
+                                "launch": ("#ff0000", "#ffffff"),
+                            },
+                            name_transform=lambda name: name.upper(),
+                        ),
+                        #widget.TextBox("default config", name="default"),
+                        #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
+                        # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
+                        # widget.StatusNotifier(),
+                        widget.Systray(),
+                        widget.Volume(),
+                        widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
+                        widget.QuickExit(),
+                    ],
+                    24,
+                    bacground='#ffffff', 
+                    #opacity=0.8,
+
+                    # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
+                    # border_color=["ff00ff", "000000", "ff00ff", "000000"]  # Borders are magenta
+                ),
+                # You can uncomment this variable if you see that on X11 floating resize/moving is laggy
+                # By default we handle these events delayed to already improve performance, however your system might still be struggling
+                # This variable is set to None (no cap) by default, but you can set it to 60 to indicate that you limit it to 60 events per second
+                # x11_drag_polling_rate = 60,
+            ),
+        )
+    else:
+        # Pantallas secundarias: solo WindowTabs y reloj
+        screens.append(
+            Screen(
+                top=bar.Bar(
+                    [
+                        widget.WindowTabs(),
+                        widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
+                    ],
+                    24,
+                )
+            )
+        )
 
 # Drag floating layouts.
 mouse = [
