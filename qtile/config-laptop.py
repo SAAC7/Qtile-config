@@ -24,23 +24,68 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import bar, layout, qtile, widget
+from libqtile import bar, layout, widget,qtile
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
 
 
+
+#importaciones propias
+from libqtile.widget import Backlight
+from libqtile.widget import Battery
 import os
 import subprocess
 from libqtile import hook
-from libqtile.widget import TextBox,  Backlight,  Battery, PulseVolume
 
+from libqtile.widget import TextBox
+import subprocess
+
+screenshot_folder = "~/Imágenes/screenshots/"
+
+# Ruta al entorno virtual
 import sys
-sys.path.insert(0, '~/PythonArch/lib/python3.11/site-packages')
+sys.path.insert(0, '/home/arch-ab/PythonArch/lib/python3.11/site-packages')
+
+# Importa el widget PulseVolume
+from libqtile.widget import PulseVolume
+
+
+
+
+
+
+# Función para obtener el nombre de la aplicación
+def get_app_name():
+    try:
+        # Usa xprop para obtener el nombre de la aplicación activa
+        app_name = subprocess.check_output(["xprop", "-id", "$(xdotool getactivewindow)", "WM_CLASS"]).decode("utf-8").strip()
+        app_name = app_name.split()[-1].strip('"')
+        return app_name
+    except subprocess.CalledProcessError:
+        return "N/A"
+
+# Función para analizar y modificar el nombre de la aplicación
+def my_func(texto):
+    for cadena in [" - Chromium", " - Firefox"]:
+        texto = texto.replace(cadena, "")
+    return texto
+
+# Crear el widget TextBox con el ancho deseado
+
+
+
+
+
+
+
+
+
 
 
 mod = "mod4"
-terminal = guess_terminal()
+#terminal = guess_terminal()
+terminal = "kitty"
 
 keys = [
     # A list of available commands that can be bound to keys can be found
@@ -90,87 +135,66 @@ keys = [
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
 
 
-    # Commands Proper
-    # General
-    Key([mod], "m", lazy.spawn("rofi -show drun -show-icons "), desc="Rofi con iconos"),
-    Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
-    Key([mod],"c", lazy.group.prev_window(), desc="cambiar ventana"),
-    Key([mod],"v", lazy.window.toggle_minimize(), desc="minimizar ventana"),
-    Key(["mod1"], "n", lazy.spawn("dunstctl set-paused toggle"), desc="Toggle notifications"),
-    Key(["mod1"], "space", lazy.next_screen(), desc="Move to other screen"),
+	#propios
 
-    # Bloqueador de pantalla
-    # Key([mod,"shift"], "x", lazy.spawn("light-locker-command -l"), desc="Bloqueador de pantalla"),
-    Key(["mod1"], "l", lazy.spawn("i3lock -c 000000")),
+	    Key([mod], "m", lazy.spawn("rofi -show drun -show-icons"), desc="Launch rofi"),
+#	    Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
+	Key([], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/'"), desc="captura de pantalla"),
+	Key(["control"], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/ && xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f'"), desc="tomca captura y la copia la portapapeles"),
+	
 
-    # Audio controls (requires pactl)
-    Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +5%")),
-    Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -5%")),
-    Key([], "XF86AudioMute", lazy.spawn("pactl set-sink-mute @DEFAULT_SINK@ toggle")),
-    # Controles de audio (PipeWire) con wpctl
-    # Key([], "XF86AudioRaiseVolume", lazy.spawn("wpctl set-volume @DEFAULT_SINK@ +0.05"), desc="Subir volumen"),
-    # Key([], "XF86AudioLowerVolume", lazy.spawn("wpctl set-volume @DEFAULT_SINK@ -0.05"), desc="Bajar volumen"),
-    # Key([], "XF86AudioMute", lazy.spawn("wpctl set-mute @DEFAULT_SINK@ toggle"), desc="Silenciar / reactivar"),
 
-    # Brightness controls (requires brightnessctl)
-    Key([], "XF86MonBrightnessUp", lazy.spawn("xbacklight -inc 5")),
-    Key([], "XF86MonBrightnessDown", lazy.spawn("xbacklight -dec 5")),
+	Key([], "XF86MonBrightnessUp", lazy.spawn("xbacklight -inc 5")),
+    	Key([], "XF86MonBrightnessDown", lazy.spawn("xbacklight -dec 5")),
+	Key([mod], "c", lazy.group.prev_window()),
+	Key([mod, "shift"], "c", lazy.group.next_window()),
+	Key([mod], "v", lazy.window.toggle_minimize()),
+	Key([mod, "shift"], "v", lazy.window.toggle_maximize()),
+	#Key([], "XF86ScreenSaver", lazy.spawn("i3lock")),
+	Key([mod, "shift"], "m", lazy.spawn("i3lock")),
+	Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +5%")),
+	Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -5%")),
+	Key([], "XF86AudioMute", lazy.spawn("pactl set-sink-mute @DEFAULT_SINK@ toggle")),
+	Key(["control"], "XF86AudioMute", lazy.spawn("pactl set-sink-mute @DEFAULT_SINK@ toggle")),  # Para algunos sistemas
+	Key([], "XF86AudioMicMute", lazy.spawn("pactl set-source-mute @DEFAULT_SOURCE@ toggle")),
+	Key(["control"], "XF86AudioMicMute", lazy.spawn("pactl set-source-mute @DEFAULT_SOURCE@ toggle")),  # Para algunos sistemas
+    	Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause")),
+    	Key([], "XF86AudioNext", lazy.spawn("playerctl next")),
+    	Key([], "XF86AudioPrev", lazy.spawn("playerctl previous")),
+
+
+
 
 ]
-
-# Add key bindings to switch VTs in Wayland.
-# We can't check qtile.core.name in default config as it is loaded before qtile is started
-# We therefore defer the check until the key binding is run by using .when(func=...)
-for vt in range(1, 8):
-    keys.append(
-        Key(
-            ["control", "mod1"],
-            f"f{vt}",
-            lazy.core.change_vt(vt).when(func=lambda: qtile.core.name == "wayland"),
-            desc=f"Switch to VT{vt}",
-        )
-    )
-
 
 groups = [Group(i) for i in "123456789"]
 
 for i in groups:
     keys.extend(
         [
-            # mod + group number = switch to group
+            # mod1 + letter of group = switch to group
             Key(
                 [mod],
                 i.name,
                 lazy.group[i.name].toscreen(),
-                desc=f"Switch to group {i.name}",
+                desc="Switch to group {}".format(i.name),
             ),
-            # mod + shift + group number = switch to & move focused window to group
+            # mod1 + shift + letter of group = switch to & move focused window to group
             Key(
                 [mod, "shift"],
                 i.name,
                 lazy.window.togroup(i.name, switch_group=True),
-                desc=f"Switch to & move focused window to group {i.name}",
+                desc="Switch to & move focused window to group {}".format(i.name),
             ),
             # Or, use below if you prefer not to switch to that group.
-            # # mod + shift + group number = move focused window to group
+            # # mod1 + shift + letter of group = move focused window to group
             # Key([mod, "shift"], i.name, lazy.window.togroup(i.name),
             #     desc="move focused window to group {}".format(i.name)),
         ]
     )
 
 layouts = [
-    # layout.Columns(border_focus_stack=["#d75f5f", "#8f3d3d"], border_width=4),
-    layout.Columns(border_focus_stack="#81a1c1", 
-                   border_focus="#5e81ac", 
-                   border_normal="#4c566a", 
-                   border_normal_stack="#3b4252", 
-                   margin=4,
-                   border_width=3,
-                #    margin_on_single=10,
-                #    border_on_single=True,
-                   ),
-    
-                   
+    layout.Columns(border_focus_stack=["#d75f5f", "#8f3d3d"], border_width=4),
     layout.Max(),
     # Try more layouts by unleashing below layouts.
     # layout.Stack(num_stacks=2),
@@ -185,6 +209,16 @@ layouts = [
     # layout.Zoomy(),
 ]
 
+
+
+
+
+
+
+
+
+
+
 widget_defaults = dict(
     font="sans",
     fontsize=12,
@@ -192,81 +226,53 @@ widget_defaults = dict(
 )
 extension_defaults = widget_defaults.copy()
 
+screens = [
+    Screen(
+        bottom=bar.Bar(
+            [
 
-def get_monitors():
-    """Devuelve lista de monitores y cuál es principal."""
-    result = subprocess.run(["xrandr", "--listmonitors"], capture_output=True, text=True)
-    lines = result.stdout.splitlines()[1:]  # saltar "Monitors: N"
-    monitors = []
-    principal = None
-    for line in lines:
-        parts = line.split()
-        name = parts[-1]  # nombre de salida
-        if line.startswith("0: +*") or "+*" in line:
-            principal = name
-        monitors.append(name)
-    return monitors, principal
 
-monitors, main = get_monitors()
-
-screens = []
-
-for mon in monitors:
-    if mon == main:
-        screens.append(
-            Screen(
-                top=bar.Bar(
-                    [
-                        #widget.CurrentLayout(),
-                        widget.GroupBox(
-                            highlight_method="block",
-                            hide_unused=True,
-                            disable_drag=True,
-                            ),
-                        widget.Prompt(),
-                        #widget.WindowName(),
-                        widget.WindowTabs(),
-                        widget.Chord(
-                            chords_colors={
-                                "launch": ("#ff0000", "#ffffff"),
-                            },
-                            name_transform=lambda name: name.upper(),
-                        ),
-                        #widget.TextBox("default config", name="default"),
-                        #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
-                        # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
-                        # widget.StatusNotifier(),
-                        widget.Systray(),
-                        widget.Volume(),
-                        widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
-                        widget.QuickExit(),
-                    ],
-                    24,
-                    bacground='#ffffff', 
-                    #opacity=0.8,
-
-                    # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
-                    # border_color=["ff00ff", "000000", "ff00ff", "000000"]  # Borders are magenta
+                widget.CurrentLayout(),
+                widget.GroupBox(),
+                widget.Prompt(),
+		widget.WindowTabs(),
+                #widget.WindowName(),
+                widget.Chord(
+                    chords_colors={
+                        "launch": ("#ff0000", "#ffffff"),
+                    },
+                    name_transform=lambda name: name.upper(),
                 ),
-                # You can uncomment this variable if you see that on X11 floating resize/moving is laggy
-                # By default we handle these events delayed to already improve performance, however your system might still be struggling
-                # This variable is set to None (no cap) by default, but you can set it to 60 to indicate that you limit it to 60 events per second
-                # x11_drag_polling_rate = 60,
-            ),
-        )
-    else:
-        # Pantallas secundarias: solo WindowTabs y reloj
-        screens.append(
-            Screen(
-                top=bar.Bar(
-                    [
-                        widget.WindowTabs(),
-                        widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
-                    ],
-                    24,
-                )
-            )
-        )
+                #widget.StatusNotifier(),
+		#widget.PulseVolume(),
+		PulseVolume(),
+		Battery(format="{char}{percent:2.0%}", update_interval=30),
+		widget.ThermalZone(
+		format_crit='{temp}°C'
+		),
+		#widget.ThermalSensor(
+		#format='{tag}: {temp:.0f}{unit}'
+		#),
+		Backlight(backlight_name='intel_backlight'),
+                widget.Systray(),
+                widget.Clock(format="%Y-%m-%d %a %I:%M %p",
+                        mouse_callbacks={
+                        # botón izquierdo abre gsimplecal; cámbialo si usas otra app
+                        "Button1": lambda: qtile.cmd_spawn("gsimplecal")
+                        },
+                             ),
+                widget.QuickExit(),
+            ],
+            24,
+            # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
+            # border_color=["ff00ff", "000000", "ff00ff", "000000"]  # Borders are magenta
+        ),
+        # You can uncomment this variable if you see that on X11 floating resize/moving is laggy
+        # By default we handle these events delayed to already improve performance, however your system might still be struggling
+        # This variable is set to None (no cap) by default, but you can set it to 60 to indicate that you limit it to 60 events per second
+        # x11_drag_polling_rate = 60,
+    ),
+]
 
 # Drag floating layouts.
 mouse = [
@@ -304,10 +310,6 @@ auto_minimize = True
 # When using the Wayland backend, this can be used to configure input devices.
 wl_input_rules = None
 
-# xcursor theme (string or None) and size (integer) for Wayland backend
-wl_xcursor_theme = None
-wl_xcursor_size = 24
-
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
 # mailing lists, GitHub issues, and other WM documentation that suggest setting
@@ -319,7 +321,8 @@ wl_xcursor_size = 24
 wmname = "LG3D"
 
 
+
 @hook.subscribe.startup_once
 def autostart():
-    home = os.path.expanduser('~/.config/qtile/autostart.sh')
-    subprocess.run([home])
+    script = os.path.expanduser("~/.config/qtile/autostart.sh")
+    subprocess.run([script])
