@@ -93,9 +93,16 @@ keys = [
     # Commands Proper
     # General
     Key([mod], "m", lazy.spawn("rofi -show drun -show-icons "), desc="Rofi con iconos"),
+    
+    # Capturador de pantalla scrot o flameshot
     Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
-    Key([mod],"c", lazy.group.prev_window(), desc="cambiar ventana"),
+    #Key([], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/'"), desc="captura de pantalla"),
+	#Key(["control"], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/ && xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f'"), desc="tomca captura y la copia la portapapeles"),
+    
+    Key([mod],"c", lazy.group.next_window(), desc="cambiar a la ventana posterior"),
+    Key([mod, "shift"], "c", lazy.group.prev_window(), desc="cambiar a la ventana anterior"),
     Key([mod],"v", lazy.window.toggle_minimize(), desc="minimizar ventana"),
+    Key([mod, "shift"], "v", lazy.window.toggle_maximize(), desc="maximizar ventana"),
     Key(["mod1"], "n", lazy.spawn("dunstctl set-paused toggle"), desc="Toggle notifications"),
     Key(["mod1"], "space", lazy.next_screen(), desc="Move to other screen"),
 
@@ -116,6 +123,11 @@ keys = [
     Key([], "XF86MonBrightnessUp", lazy.spawn("xbacklight -inc 5")),
     Key([], "XF86MonBrightnessDown", lazy.spawn("xbacklight -dec 5")),
 
+    
+    # Control de multimedia
+    Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="control multimedia play or pause"),
+    Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="control multimedia next"),
+    Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="control multimedia previous"),
 ]
 
 # Add key bindings to switch VTs in Wayland.
@@ -236,9 +248,19 @@ for mon in monitors:
                         #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
                         # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
                         # widget.StatusNotifier(),
+                        PulseVolume(),
+		                Battery(format="{char}{percent:2.0%}", update_interval=30),
+		                widget.ThermalZone(
+		                    format_crit='{temp}°C'
+		                ),
                         widget.Systray(),
                         widget.Volume(),
-                        widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
+                        widget.Clock(format="%Y-%m-%d %a %I:%M %p",
+                                        mouse_callbacks={
+                                        # botón izquierdo abre gsimplecal; cámbialo si usas otra app
+                                        "Button1": lambda: qtile.cmd_spawn("gsimplecal")
+                                        },
+                                     ),
                         widget.QuickExit(),
                     ],
                     24,

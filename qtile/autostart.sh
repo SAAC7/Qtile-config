@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #picom -b
 
 # agente para permisos para montar unidades y asi en thunar con el poolkit 
@@ -7,7 +7,7 @@
 thunar --daemon &
 udiskie -t &
 
-# iconos
+#   iconos
 #   redes
 nm-applet &
 #   bluetooth
@@ -16,10 +16,10 @@ blueman-applet &
 #   clipboard
 copyq &
 #   schreenshots
-#flameshot &
+flameshot &
 #   notifications
-killall dunst 2>/dev/null
-dunst &
+#killall dunst 2>/dev/null
+#dunst &
 #   fondo de pantalla y bloqueo de pantalla
 nitrogen --restore &
 xss-lock -- i3lock -c 000000 &
