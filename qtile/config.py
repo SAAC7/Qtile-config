@@ -33,7 +33,7 @@ from libqtile.utils import guess_terminal
 import os
 import subprocess
 from libqtile import hook
-from libqtile.widget import TextBox,  Backlight,  Battery, PulseVolume
+from libqtile.widget import TextBox,  Backlight,  Battery, Volume
 
 import sys
 sys.path.insert(0, '~/PythonArch/lib/python3.11/site-packages')
@@ -248,13 +248,15 @@ for mon in monitors:
                         #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
                         # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
                         # widget.StatusNotifier(),
-                        PulseVolume(),
+                        #PulseVolume(),
+                        Volume(step=5),
+                        Backlight(backlight_name='intel_backlight'),
 		                Battery(format="{char}{percent:2.0%}", update_interval=30),
 		                widget.ThermalZone(
 		                    format_crit='{temp}°C'
 		                ),
                         widget.Systray(),
-                        widget.Volume(),
+                        #widget.Volume(),
                         widget.Clock(format="%Y-%m-%d %a %I:%M %p",
                                         mouse_callbacks={
                                         # botón izquierdo abre gsimplecal; cámbialo si usas otra app

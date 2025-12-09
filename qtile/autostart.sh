@@ -16,7 +16,7 @@ blueman-applet &
 #   clipboard
 copyq &
 #   schreenshots
-flameshot &
+#flameshot &
 #   notifications
 #killall dunst 2>/dev/null
 #dunst &
