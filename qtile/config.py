@@ -28,7 +28,7 @@ from libqtile import bar, layout, qtile, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
-
+import psutil
 
 import os
 import subprocess
@@ -36,7 +36,7 @@ from libqtile import hook
 from libqtile.widget import TextBox,  Backlight,  Battery, Volume,ThermalZone, ThermalSensor, PulseVolume
 
 import sys
-sys.path.insert(0, '~/PythonArch/lib/python3.11/site-packages')
+# sys.path.insert(0, '~/PythonArch/lib/python3.11/site-packages')
 
 def has_backlight():
     return os.path.isdir("/sys/class/backlight") and len(os.listdir("/sys/class/backlight")) > 0
@@ -44,15 +44,35 @@ def has_backlight():
 def has_battery():
     return os.path.isdir("/sys/class/power_supply") and any("BAT" in d for d in os.listdir("/sys/class/power_supply"))
 
+
+#sudo pacman -S lm_sensors
+#sudo sensors-detect
+#sensors
+#sudo pacman -S python-psutil
+# def get_temp_widget():
+#     # thermal_zone disponible?
+#     if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
+#         return ThermalZone(format="{temp}°C")
+#     else:
+#         try:
+#             return ThermalSensor(fmt="{temp:.0f}°C")
+#         except:
+#             return TextBox(text="No Temp")
+
 def get_temp_widget():
-    # thermal_zone disponible?
-    if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
-        return ThermalZone(format="{temp}°C")
-    else:
-        try:
-            return ThermalSensor(fmt="{temp:.0f}°C")
-        except:
-            return TextBox(text="No Temp")
+    try:
+        # Verifica si hay sensores disponibles
+        temps = psutil.sensors_temperatures()
+        if temps:
+            # ThermalSensor solo si detecta al menos un sensor
+            return widget.ThermalSensor(format="{temp:.0f}°C")
+        else:
+            # No hay sensores → fallback seguro
+            return widget.TextBox(text="")
+    except Exception:
+        # Cualquier otro error → fallback seguro
+        return widget.TextBox(text="")
+
 
 def get_backlight_device():
     path = "/sys/class/backlight"
@@ -277,11 +297,10 @@ for mon in monitors:
                         # widget.StatusNotifier(),
                         #PulseVolume(),
                         #Volume(step=5),
-                        Backlight(backlight_name=get_backlight_device()) if has_backlight() else TextBox(text="No Backlight"),
-		                Battery(format="{char}{percent:2.0%}", update_interval=30) if has_battery() else TextBox(text="No Battery"),
-		                widget.ThermalZone(
-		                    format_crit='{temp}°C'
-		                ),
+                        Backlight(backlight_name=get_backlight_device()) if has_backlight() else TextBox(text=""),
+		                Battery(format="{char}{percent:2.0%}", update_interval=30) if has_battery() else TextBox(text=""),
+		                #widget.ThermalZone(format_crit='{temp}°C'),
+                        get_temp_widget(),
                         widget.Systray(),
                         #widget.Volume(),
                         widget.Clock(format="%Y-%m-%d %a %I:%M %p",
@@ -293,7 +312,7 @@ for mon in monitors:
                         widget.QuickExit(),
                     ],
                     24,
-                    bacground='#ffffff', 
+                    background='#000000', 
                     #opacity=0.8,
 
                     # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
