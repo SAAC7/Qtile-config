@@ -149,6 +149,7 @@ keys = [
     Key([mod],"c", lazy.group.next_window(), desc="cambiar a la ventana posterior"),
     Key([mod, "shift"], "c", lazy.group.prev_window(), desc="cambiar a la ventana anterior"),
     Key([mod],"v", lazy.window.toggle_minimize(), desc="minimizar ventana"),
+    Key([mod, "shift"],"f", lazy.window.disable_floating(), desc="Quitar floatingg a la ventana"),
     Key([mod, "shift"], "v", lazy.window.toggle_maximize(), desc="maximizar ventana"),
     Key(["mod1"], "n", lazy.spawn("dunstctl set-paused toggle"), desc="Toggle notifications"),
     Key(["mod1"], "space", lazy.next_screen(), desc="Move to other screen"),
