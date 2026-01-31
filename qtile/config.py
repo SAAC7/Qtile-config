@@ -297,7 +297,7 @@ for mon in monitors:
                         # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
                         # widget.StatusNotifier(),
                         #PulseVolume(),
-                        #Volume(step=5),
+                        Volume(step=5),
                         Backlight(backlight_name=get_backlight_device()) if has_backlight() else TextBox(text=""),
 		                Battery(format="{char}{percent:2.0%}", update_interval=30) if has_battery() else TextBox(text=""),
 		                #widget.ThermalZone(format_crit='{temp}°C'),
