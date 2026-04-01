@@ -44,6 +44,7 @@ def has_backlight():
 def has_battery():
     return os.path.isdir("/sys/class/power_supply") and any("BAT" in d for d in os.listdir("/sys/class/power_supply"))
 
+#subprocess.Popen(["picom", "--config", "~/.config/picom/picom.conf"])
 
 #sudo pacman -S lm_sensors
 #sudo sensors-detect
@@ -142,9 +143,9 @@ keys = [
     Key([mod], "m", lazy.spawn("rofi -show drun -show-icons "), desc="Rofi con iconos"),
     
     # Capturador de pantalla scrot o flameshot
-    Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
-    #Key([], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/'"), desc="captura de pantalla"),
-	#Key(["control"], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/ && xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f'"), desc="tomca captura y la copia la portapapeles"),
+    #Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
+    Key([], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/'"), desc="captura de pantalla"),
+	Key(["control"], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/ && xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f'"), desc="tomca captura y la copia la portapapeles"),
     
     Key([mod],"c", lazy.group.next_window(), desc="cambiar a la ventana posterior"),
     Key([mod, "shift"], "c", lazy.group.prev_window(), desc="cambiar a la ventana anterior"),
@@ -176,6 +177,13 @@ keys = [
     Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause"), desc="control multimedia play or pause"),
     Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="control multimedia next"),
     Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="control multimedia previous"),
+    
+    #obs 
+    Key([mod, "control"], "o", lazy.group["9"].toscreen(2)),
+
+    # En tu config.py de Qtile
+    Key([mod, "shift"], "e", lazy.spawn(os.path.expanduser("~/.config/qtile/scripts/powermenu"))),
+
 ]
 
 # Add key bindings to switch VTs in Wayland.
@@ -208,7 +216,7 @@ for i in groups:
             Key(
                 [mod, "shift"],
                 i.name,
-                lazy.window.togroup(i.name, switch_group=True),
+                lazy.window.togroup(i.name, switch_group=False),
                 desc=f"Switch to & move focused window to group {i.name}",
             ),
             # Or, use below if you prefer not to switch to that group.
