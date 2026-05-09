@@ -1,0 +1,55 @@
+/*******************************************************
+ * ROFI Dunst Menu - Estilo EndeavourOS Purple
+ *******************************************************/
+
+* {
+    /* Los colores de tu configuración de Dunst */
+    background:                  #28143c;
+    foreground:                  #ffffff;
+    accent:                      #7f3fbf; /* Tu frame_color */
+    selected-bg:                 #3d1f5c;
+}
+
+window {
+    background-color:            @background;
+    border:                      1px;
+    border-color:                @accent;
+    border-radius:               7px; /* Igual a tu corner_radius */
+    width:                       250px;
+    /* Aparecerá en la esquina inferior derecha como tu Dunst */
+    location:                    south east;
+    anchor:                      south east;
+    x-offset:                    -340;
+    y-offset:                    -5;
+}
+
+mainbox {
+    background-color:            transparent;
+    children:                    [ listview ];
+}
+
+listview {
+    background-color:            transparent;
+    lines:                       3;
+    spacing:                     5px;
+    padding:                     10px;
+}
+
+element {
+    background-color:            transparent;
+    text-color:                  @foreground;
+    border-radius:               4px;
+    padding:                     5px;
+}
+
+element selected {
+    background-color:            @selected-bg;
+    text-color:                  @foreground;
+}
+
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    vertical-align:              0.5;
+}
+

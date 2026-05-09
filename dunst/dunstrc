@@ -73,7 +73,7 @@
     history_length = 0
 
     ### Misc/Advanced ###
-    dmenu = /usr/bin/dmenu -p dunst:
+    dmenu = /usr/bin/rofi -dmenu -p "Action:" -theme ".config/rofi/themes/deep-purple.rasi"
     browser = /usr/bin/xdg-open
     always_run_script = true
     title = Dunst
@@ -86,8 +86,8 @@
     force_xinerama = false
 
     ### mouse
-    mouse_left_click = close_current
-    mouse_middle_click = do_action, close_current
+    mouse_left_click = context, close_current
+    mouse_middle_click = close_current
     mouse_right_click = close_all
 
 [experimental]
@@ -97,13 +97,13 @@
 [urgency_low]
     background = "#28143c"
     foreground = "#ffffff"
-    timeout = 5
+    timeout = 10 
     icon = /usr/share/icons/Qogir/16/status/package-installed-outdated.svg
 
 [urgency_normal]
     background = "#28143c"
     foreground = "#ffffff"
-    timeout = 5
+    timeout = 10
     override_pause_level = 30
     icon = /usr/share/icons/Qogir/16/emblems/emblem-question.svg
 
@@ -113,6 +113,13 @@
     frame_color = "#ff7f7f"
     timeout = 120
     icon = /usr/share/icons/Qogir/16/actions/dialog-warning.svg
+
+[blueman_fix]
+    appname = "blueman"
+    summary = "*Pairing request*"
+    set_stack_tag = "blueman_pair"
+    # Esta es la clave:
+    history_ignore = yes
 
 [stack-volumes]
     appname = "some_volume_notifiers"

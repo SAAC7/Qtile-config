@@ -21,5 +21,7 @@ copyq &
 #killall dunst 2>/dev/null
 dunst &
 #   fondo de pantalla y bloqueo de pantalla
-nitrogen --restore &
+#nitrogen --restore &
 xss-lock -- i3lock -c 000000 &
+/home/absar/.screenlayout/desktop_ryzen.sh &
+feh --bg-fill Pictures/optimus-prime-4k-3840-x-2160-u52qw8a3d555o7mt.webp
