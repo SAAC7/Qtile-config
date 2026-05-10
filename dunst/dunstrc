@@ -73,7 +73,7 @@
     history_length = 0
 
     ### Misc/Advanced ###
-    dmenu = /usr/bin/rofi -dmenu -p "Action:" -theme ".config/rofi/themes/deep-purple.rasi"
+    dmenu = /usr/bin/rofi -dmenu -p "Action:" -theme "~/.config/dunst/dunst-menu.rasi"
     browser = /usr/bin/xdg-open
     always_run_script = true
     title = Dunst
