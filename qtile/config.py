@@ -218,18 +218,24 @@ keys = [
     Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="control multimedia next"),
     Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="control multimedia previous"),
     
-#    #obs 
-#    Key([mod, "control"], "o", lazy.group["9"].toscreen(2)),
-#
-#    # En tu config.py de Qtile
-#    Key([mod, "shift"], "e", lazy.spawn(os.path.expanduser("~/.config/qtile/scripts/powermenu"))),
-# 4. Atarlo a Qtile — en ~/.config/qtile/config.py
-# Agrega esto en tu lista de keys:
-    Key([mod], "F9",lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/gaming-profile.sh")),desc="Gaming profile switcher"),
-
+    # ── Scripts de perfil y pantallas ────────────────────────────────────────
+ 
+    # F9 → Menú rofi de perfil de rendimiento (Gaming / Performance / Balanced / Power Save)
+    Key([mod], "F9",
+        lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/gaming-profile.sh")),
+        desc="Gaming profile switcher"),
+ 
+    # F10 → Toggle monitor de dunst (pantalla principal / todas las pantallas)
     Key([mod], "F10",
         lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/dunst-monitor.sh")),
         desc="Toggle dunst monitor: principal / todas"),
+ 
+    # F11 → Toggle modo cine: inhibe/restaura apagado de pantallas y bloqueo
+    #        Útil para ver películas sin que se apague la pantalla o bloquee la sesión
+    Key([mod], "F11",
+        lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/idle-toggle.sh")),
+        desc="Idle profile: normal / descarga / película"),
+ 
 
 
 ]

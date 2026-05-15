@@ -1,88 +1,169 @@
 #!/usr/bin/env bash
-#######################################################
-# Gaming profile switcher — Rofi + Dunst
-# Qtile / Arch Linux
-# Perfiles: performance, balanced, powersave, gaming
-#######################################################
+# ==============================================================================
+# gaming-profile.sh — Switcher de perfiles de rendimiento
+# Qtile + Dunst + TLP — Arch Linux
+#
+# Perfiles:
+#   gaming      → TLP AC forzado, governor performance, gamemode, idle off
+#   performance → TLP AC forzado, governor performance, gamemode manual
+#   balanced    → TLP normal, governor schedutil, gamemode off
+#   powersave   → TLP BAT forzado, governor powersave, gamemode off
+#
+# Integración: llama a idle-profile.sh para gestionar DPMS/suspensión
+# ==============================================================================
 
-DUNST_ICON_OK="dialog-information"
-DUNST_ICON_WARN="dialog-warning"
-NOTIFY_TIMEOUT=4000
+DUNST_TIMEOUT=4000
+STACK_TAG="gameprofile"
+STATE_FILE="/tmp/gaming-profile-current"
+IDLE_SCRIPT="$HOME/.config/rofi/scripts/idle-profile.sh"
 
 notify() {
-    local title="$1"
-    local body="$2"
-    local icon="${3:-$DUNST_ICON_OK}"
-    dunstify -u normal -t "$NOTIFY_TIMEOUT" -i "$icon" \
-        -h string:x-dunst-stack-tag:gameprofile \
-        "$title" "$body"
+    dunstify -u normal -t "$DUNST_TIMEOUT" \
+        -h string:x-dunst-stack-tag:"$STACK_TAG" \
+        "$1" "$2"
 }
 
-get_current_governor() {
+get_current() {
+    cat "$STATE_FILE" 2>/dev/null || echo "balanced"
+}
+
+get_governor() {
     cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown"
-}
-
-get_current_profile() {
-    powerprofilesctl get 2>/dev/null || echo "unknown"
 }
 
 is_gamemode_active() {
     gamemoded --status 2>/dev/null | grep -q "is active" && echo "activo" || echo "inactivo"
 }
 
-apply_performance() {
-    # CPU governor
-    sudo cpupower frequency-set -g performance &>/dev/null
-    # power-profiles-daemon si está disponible
-    powerprofilesctl set performance 2>/dev/null
-    # vm.max_map_count por si no está persistente
-    sudo sysctl -w vm.max_map_count=2147483642 &>/dev/null
-    notify " Modo Performance" \
-        "CPU: performance\nGamemode: manual\nLatencia mínima activada" \
-        "$DUNST_ICON_OK"
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+set_governor() {
+    sudo cpupower frequency-set -g "$1" &>/dev/null
 }
 
-apply_gaming() {
-    sudo cpupower frequency-set -g performance &>/dev/null
-    powerprofilesctl set performance 2>/dev/null
+set_vm_map() {
     sudo sysctl -w vm.max_map_count=2147483642 &>/dev/null
-    # Activar gamemode explícitamente
+}
+
+stop_gamemode() {
+    pkill gamemoded 2>/dev/null || true
+}
+
+start_gamemode() {
+    pkill gamemoded 2>/dev/null || true
     gamemoded -r &>/dev/null &
+    disown
+}
+
+# ── Perfiles ─────────────────────────────────────────────────────────────────
+
+apply_gaming() {
+    # TLP: forzar modo AC (máximo rendimiento, ignora batería)
+    sudo tlp ac &>/dev/null
+
+    set_governor performance
+    set_vm_map
+    start_gamemode
+
+    # Idle: desactivar todo (no queremos que la pantalla se apague jugando)
+    bash "$IDLE_SCRIPT" --apply pelicula 2>/dev/null || true
+    echo "gaming" > /tmp/idle-profile-current
+
+    # Desactivar DPMS directamente como respaldo
+    xset -dpms
+    xset s off
+    xset s noblank
+
+    echo "gaming" > "$STATE_FILE"
     notify " Modo Gaming" \
-        "CPU: performance\nGamemode: activado\nProton-GE listo" \
-        "$DUNST_ICON_OK"
+        "TLP: AC forzado\nCPU: performance\nGamemode: activado\nIdle: desactivado"
+}
+
+apply_performance() {
+    sudo tlp ac &>/dev/null
+    set_governor performance
+    set_vm_map
+    stop_gamemode
+
+    # Idle: restaurar normal (las pantallas sí pueden apagarse)
+    echo "normal" > /tmp/idle-profile-current
+    xset +dpms
+    xset dpms 300 300 310
+    xset s 300 10
+
+    echo "performance" > "$STATE_FILE"
+    notify " Modo Performance" \
+        "TLP: AC forzado\nCPU: performance\nGamemode: manual\nIdle: normal"
 }
 
 apply_balanced() {
-    sudo cpupower frequency-set -g schedutil &>/dev/null
-    powerprofilesctl set balanced 2>/dev/null
-    # Detener gamemode si estaba corriendo
-    pkill gamemoded 2>/dev/null
+    # TLP: devolver control automático según fuente de alimentación
+    sudo tlp start &>/dev/null
+
+    set_governor schedutil
+    stop_gamemode
+
+    echo "normal" > /tmp/idle-profile-current
+    xset +dpms
+    xset dpms 300 300 310
+    xset s 300 10
+
+    echo "balanced" > "$STATE_FILE"
     notify " Modo Balanced" \
-        "CPU: schedutil\nGamemode: detenido\nBalance energía/rendimiento" \
-        "$DUNST_ICON_OK"
+        "TLP: automático\nCPU: schedutil\nGamemode: inactivo\nIdle: normal"
 }
 
 apply_powersave() {
-    sudo cpupower frequency-set -g powersave &>/dev/null
-    powerprofilesctl set power-saver 2>/dev/null
-    pkill gamemoded 2>/dev/null
+    # TLP: forzar modo batería
+    sudo tlp bat &>/dev/null
+
+    set_governor powersave
+    stop_gamemode
+
+    echo "normal" > /tmp/idle-profile-current
+    xset +dpms
+    xset dpms 120 120 130
+    xset s 120 10
+
+    echo "powersave" > "$STATE_FILE"
     notify " Modo Power Save" \
-        "CPU: powersave\nGamemode: detenido\nConsumo mínimo" \
-        "$DUNST_ICON_WARN"
+        "TLP: BAT forzado\nCPU: powersave\nGamemode: inactivo\nIdle: agresivo (2min)"
 }
 
 show_status() {
-    local gov
-    gov=$(get_current_governor)
-    local gm
+    local gov gm tlp_mode idle
+    gov=$(get_governor)
     gm=$(is_gamemode_active)
+    tlp_mode=$(tlp-stat -s 2>/dev/null | grep "Mode" | head -1 | awk '{print $NF}' || echo "unknown")
+    idle=$(cat /tmp/idle-profile-current 2>/dev/null || echo "unknown")
+
     notify "󰕾 Estado actual" \
-        "Governor: $gov\nGamemode: $gm" \
-        "$DUNST_ICON_OK"
+        "CPU governor: $gov\nGamemode: $gm\nTLP: $tlp_mode\nIdle: $idle"
 }
 
-# ── Menú rofi ────────────────────────────────────────
+# ── Manejo de argumento directo (para idle-profile.sh) ───────────────────────
+# Permite llamadas como: gaming-profile.sh --apply gaming
+if [[ "$1" == "--apply" ]]; then
+    case "$2" in
+        gaming)     apply_gaming ;;
+        performance) apply_performance ;;
+        balanced)   apply_balanced ;;
+        powersave)  apply_powersave ;;
+    esac
+    exit 0
+fi
+
+# ── Menú Rofi ────────────────────────────────────────────────────────────────
+
+CURRENT=$(get_current)
+case "$CURRENT" in
+    gaming)      CURRENT_LABEL="Gaming" ;;
+    performance) CURRENT_LABEL="Performance" ;;
+    balanced)    CURRENT_LABEL="Balanced" ;;
+    powersave)   CURRENT_LABEL="Power Save" ;;
+    *)           CURRENT_LABEL="Desconocido" ;;
+esac
+
 OPTIONS=" Gaming\n Performance\n Balanced\n Power Save\n󰕾 Ver estado"
 
 SELECTED=$(echo -e "$OPTIONS" | rofi \
@@ -90,15 +171,15 @@ SELECTED=$(echo -e "$OPTIONS" | rofi \
     -i \
     -p "" \
     -theme ~/.config/rofi/power-profile.rasi \
-    -mesg "Perfil de rendimiento" \
+    -mesg "Perfil actual: $CURRENT_LABEL" \
     -no-custom \
     -selected-row 0)
 
 case "$SELECTED" in
-    " Gaming")       apply_gaming ;;
-    " Performance")  apply_performance ;;
-    " Balanced")     apply_balanced ;;
-    " Power Save")   apply_powersave ;;
-    "󰕾 Ver estado")  show_status ;;
-    *)               exit 0 ;;
+    " Gaming")      apply_gaming ;;
+    " Performance") apply_performance ;;
+    " Balanced")    apply_balanced ;;
+    " Power Save")  apply_powersave ;;
+    "󰕾 Ver estado") show_status ;;
+    *) exit 0 ;;
 esac

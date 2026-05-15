@@ -39,7 +39,7 @@ else
     sed -i 's/^    monitor = .*/    monitor = 0/' "$DUNST_CONF"
     sed -i 's/^    follow = .*/    follow = none/' "$DUNST_CONF"
     MODE=" Solo pantalla principal"
-    BODY="eDP1 — monitor central"
+    BODY=" Solo en Monitor Primario"
 fi
 
 # Recargar dunst limpiamente
