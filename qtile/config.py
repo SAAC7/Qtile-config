@@ -227,6 +227,11 @@ keys = [
 # Agrega esto en tu lista de keys:
     Key([mod], "F9",lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/gaming-profile.sh")),desc="Gaming profile switcher"),
 
+    Key([mod], "F10",
+        lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/dunst-monitor.sh")),
+        desc="Toggle dunst monitor: principal / todas"),
+
+
 ]
 
 # Add key bindings to switch VTs in Wayland.
