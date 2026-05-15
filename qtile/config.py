@@ -144,9 +144,49 @@ keys = [
     
     # Capturador de pantalla scrot o flameshot
     #Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
-    Key([], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/'"), desc="captura de pantalla"),
-	Key(["control"], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/ && xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f'"), desc="tomca captura y la copia la portapapeles"),
+#    Key([], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/'"), desc="captura de pantalla"),
+#	Key(["control"], "Print", lazy.spawn("scrot -s '%Y-%m-%d_%H-%M-%S_screenshot.png' -e 'mv $f ~/Pictures/Screenshots/ && xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f'"), desc="tomca captura y la copia la portapapeles"),
     
+
+# Screenshots
+    Key([], "Print",
+        lazy.spawn(
+            'bash -c "mkdir -p ~/Pictures/Screenshots && '
+            'scrot \'%Y-%m-%d_%H-%M-%S_screenshot.png\' '
+            '-e \'mv $f ~/Pictures/Screenshots/\' && '
+            'notify-send \\"Screenshot\\" \\"Pantalla completa guardada en ~/Pictures/Screenshots/\\""'
+        ),
+        desc="Captura pantalla completa"),
+
+    Key([mod], "Print",
+        lazy.spawn(
+            'bash -c "mkdir -p ~/Pictures/Screenshots && '
+            'scrot -u \'%Y-%m-%d_%H-%M-%S_screenshot.png\' '
+            '-e \'mv $f ~/Pictures/Screenshots/\' && '
+            'notify-send \\"Screenshot\\" \\"Ventana activa guardada en ~/Pictures/Screenshots/\\""'
+        ),
+        desc="Captura ventana activa"),
+    
+    Key([mod, "shift"], "Print",
+        lazy.spawn(
+            'bash -c "mkdir -p ~/Pictures/Screenshots && '
+            'sleep 2 && '
+            'scrot -s -f \'%Y-%m-%d_%H-%M-%S_screenshot.png\' '
+            '-e \'mv $f ~/Pictures/Screenshots/\' && '
+            'notify-send \\"Screenshot\\" \\"Selección guardada en ~/Pictures/Screenshots/\\""'
+        ),
+        desc="Captura selección con mouse"),
+    Key(["control"], "Print",
+        lazy.spawn(
+            'bash -c "mkdir -p ~/Pictures/Screenshots && '
+            'scrot -s -f \'%Y-%m-%d_%H-%M-%S_screenshot.png\' '
+            '-e \'mv $f ~/Pictures/Screenshots/ && '
+            'xclip -sel clip -t image/png -i ~/Pictures/Screenshots/$f\' && '
+            'notify-send \\"Screenshot\\" \\"Captura copiada al portapapeles\\""'
+        ),
+        desc="Captura selección y copia al portapapeles"),
+
+
     Key([mod],"c", lazy.group.next_window(), desc="cambiar a la ventana posterior"),
     Key([mod, "shift"], "c", lazy.group.prev_window(), desc="cambiar a la ventana anterior"),
     Key([mod],"v", lazy.window.toggle_minimize(), desc="minimizar ventana"),
@@ -178,11 +218,14 @@ keys = [
     Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="control multimedia next"),
     Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="control multimedia previous"),
     
-    #obs 
-    Key([mod, "control"], "o", lazy.group["9"].toscreen(2)),
-
-    # En tu config.py de Qtile
-    Key([mod, "shift"], "e", lazy.spawn(os.path.expanduser("~/.config/qtile/scripts/powermenu"))),
+#    #obs 
+#    Key([mod, "control"], "o", lazy.group["9"].toscreen(2)),
+#
+#    # En tu config.py de Qtile
+#    Key([mod, "shift"], "e", lazy.spawn(os.path.expanduser("~/.config/qtile/scripts/powermenu"))),
+# 4. Atarlo a Qtile — en ~/.config/qtile/config.py
+# Agrega esto en tu lista de keys:
+    Key([mod], "F9",lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/gaming-profile.sh")),desc="Gaming profile switcher"),
 
 ]
 

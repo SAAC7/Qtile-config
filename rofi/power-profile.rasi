@@ -1,0 +1,123 @@
+/*******************************************************
+ * ROFI gaming profile switcher
+ * Qtile + Dunst — Arch Linux
+ *******************************************************/
+configuration {
+    font:              "Noto Sans Regular 10";
+    show-icons:        false;
+    scroll-method:     0;
+    disable-history:   false;
+    fullscreen:        false;
+    hide-scrollbar:    true;
+    sidebar-mode:      false;
+}
+
+@import "~/.config/rofi/config.rasi"
+
+* {
+    background:     #1e1e2e;
+    background-alt: #181825;
+    foreground:     #cdd6f4;
+    selected-bg:    #89b4fa;
+    selected-fg:    #1e1e2e;
+    urgent-bg:      #f38ba8;
+    urgent-fg:      #1e1e2e;
+    active-bg:      #a6e3a1;
+    active-fg:      #1e1e2e;
+    border-color:   #313244;
+    separator:      #45475a;
+}
+
+window {
+    background-color: @background;
+    border:           1px;
+    border-color:     @border-color;
+    border-radius:    8px;
+    padding:          8px;
+    width:            220px;
+    location:         northeast;
+    x-offset:         -12;
+    y-offset:         40;
+}
+
+mainbox {
+    children: [ message, listview ];
+    spacing:  6px;
+}
+
+message {
+    expand:     false;
+    font:       "Noto Sans Bold 9";
+    text-color: @foreground;
+    padding:    4px 8px 0px 8px;
+}
+
+textbox {
+    text-color: @foreground;
+    font:       "Noto Sans Bold 9";
+}
+
+listview {
+    lines:   5;
+    columns: 1;
+    spacing: 2px;
+    padding: 4px;
+}
+
+element {
+    border:        0;
+    border-radius: 6px;
+    padding:       8px 12px;
+    spacing:       8px;
+    cursor:        pointer;
+}
+
+element-text {
+    background-color: inherit;
+    text-color:       inherit;
+    font:             "Noto Sans Regular 10";
+    vertical-align:   0.5;
+}
+
+element.normal.normal {
+    background-color: transparent;
+    text-color:       @foreground;
+}
+
+element.selected.normal {
+    background-color: @selected-bg;
+    text-color:       @selected-fg;
+}
+
+element.normal.active {
+    background-color: @active-bg;
+    text-color:       @active-fg;
+}
+
+element.selected.active {
+    background-color: @active-bg;
+    text-color:       @active-fg;
+}
+
+element.normal.urgent {
+    background-color: @urgent-bg;
+    text-color:       @urgent-fg;
+}
+
+element.selected.urgent {
+    background-color: @urgent-bg;
+    text-color:       @urgent-fg;
+}
+
+element.alternate.normal {
+    background-color: @background-alt;
+    text-color:       @foreground;
+}
+
+scrollbar {
+    width:        3px;
+    border:       0;
+    handle-color: @separator;
+    handle-width: 6px;
+    padding:      0;
+}
