@@ -6,7 +6,7 @@
     ### Display ###
     monitor = 0
 
-    follow = mouse
+    follow = none
 
     ### Geometry ###
     width = 300

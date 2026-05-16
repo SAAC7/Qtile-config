@@ -4,12 +4,16 @@
 # Qtile + Dunst + TLP — Arch Linux
 #
 # Perfiles:
-#   gaming      → TLP AC forzado, governor performance, gamemode, idle off
-#   performance → TLP AC forzado, governor performance, gamemode manual
-#   balanced    → TLP normal, governor schedutil, gamemode off
-#   powersave   → TLP BAT forzado, governor powersave, gamemode off
+#   gaming      → TLP AC forzado, governor performance, gamemode ON,  idle OFF
+#   performance → TLP AC forzado, governor performance, gamemode OFF, idle normal
+#   balanced    → TLP automático, governor powersave + EPP balance,   idle normal
+#   powersave   → TLP BAT forzado, governor powersave + EPP power,    idle agresivo
 #
-# Integración: llama a idle-profile.sh para gestionar DPMS/suspensión
+# Nota sobre governors:
+#   Con intel_pstate (activo) solo existen: performance / powersave
+#   Con amd-pstate-epp igual: performance / powersave
+#   Con acpi-cpufreq / intel_pstate pasivo: schedutil, ondemand, etc.
+#   El script detecta el driver y elige el governor correcto automáticamente.
 # ==============================================================================
 
 DUNST_TIMEOUT=4000
@@ -31,14 +35,40 @@ get_governor() {
     cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown"
 }
 
+get_cpu_driver() {
+    cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver 2>/dev/null || echo "unknown"
+}
+
 is_gamemode_active() {
     gamemoded --status 2>/dev/null | grep -q "is active" && echo "activo" || echo "inactivo"
 }
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+# Devuelve el governor "balanceado" según el driver activo
+get_balanced_governor() {
+    local driver
+    driver=$(get_cpu_driver)
+    case "$driver" in
+        intel_pstate|amd-pstate-epp)
+            # En modo activo solo hay performance/powersave
+            # powersave aquí es inteligente (equivalente a schedutil en otros drivers)
+            echo "powersave"
+            ;;
+        *)
+            # acpi-cpufreq, intel_pstate pasivo, amd-pstate pasivo
+            if cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors \
+               2>/dev/null | grep -q "schedutil"; then
+                echo "schedutil"
+            else
+                echo "ondemand"
+            fi
+            ;;
+    esac
+}
+
 set_governor() {
-    sudo cpupower frequency-set -g "$1" &>/dev/null
+    sudo cpupower frequency-set -g "$1" &>/dev/null || true
 }
 
 set_vm_map() {
@@ -55,21 +85,23 @@ start_gamemode() {
     disown
 }
 
+restore_idle_normal() {
+    echo "normal" > /tmp/idle-profile-current
+    xset +dpms
+    xset dpms 300 300 310
+    xset s 300 10
+}
+
 # ── Perfiles ─────────────────────────────────────────────────────────────────
 
 apply_gaming() {
-    # TLP: forzar modo AC (máximo rendimiento, ignora batería)
     sudo tlp ac &>/dev/null
-
     set_governor performance
     set_vm_map
     start_gamemode
 
-    # Idle: desactivar todo (no queremos que la pantalla se apague jugando)
-    bash "$IDLE_SCRIPT" --apply pelicula 2>/dev/null || true
+    # Idle: desactivar todo (pantallas y suspensión)
     echo "gaming" > /tmp/idle-profile-current
-
-    # Desactivar DPMS directamente como respaldo
     xset -dpms
     xset s off
     xset s noblank
@@ -84,12 +116,7 @@ apply_performance() {
     set_governor performance
     set_vm_map
     stop_gamemode
-
-    # Idle: restaurar normal (las pantallas sí pueden apagarse)
-    echo "normal" > /tmp/idle-profile-current
-    xset +dpms
-    xset dpms 300 300 310
-    xset s 300 10
+    restore_idle_normal
 
     echo "performance" > "$STATE_FILE"
     notify " Modo Performance" \
@@ -97,29 +124,25 @@ apply_performance() {
 }
 
 apply_balanced() {
-    # TLP: devolver control automático según fuente de alimentación
     sudo tlp start &>/dev/null
 
-    set_governor schedutil
+    local gov
+    gov=$(get_balanced_governor)
+    set_governor "$gov"
     stop_gamemode
-
-    echo "normal" > /tmp/idle-profile-current
-    xset +dpms
-    xset dpms 300 300 310
-    xset s 300 10
+    restore_idle_normal
 
     echo "balanced" > "$STATE_FILE"
     notify " Modo Balanced" \
-        "TLP: automático\nCPU: schedutil\nGamemode: inactivo\nIdle: normal"
+        "TLP: automático\nCPU: $gov\nGamemode: inactivo\nIdle: normal"
 }
 
 apply_powersave() {
-    # TLP: forzar modo batería
     sudo tlp bat &>/dev/null
-
     set_governor powersave
     stop_gamemode
 
+    # Idle más agresivo en powersave
     echo "normal" > /tmp/idle-profile-current
     xset +dpms
     xset dpms 120 120 130
@@ -127,28 +150,28 @@ apply_powersave() {
 
     echo "powersave" > "$STATE_FILE"
     notify " Modo Power Save" \
-        "TLP: BAT forzado\nCPU: powersave\nGamemode: inactivo\nIdle: agresivo (2min)"
+        "TLP: BAT forzado\nCPU: powersave\nGamemode: inactivo\nIdle: 2min"
 }
 
 show_status() {
-    local gov gm tlp_mode idle
+    local gov gm driver balanced_gov idle
     gov=$(get_governor)
     gm=$(is_gamemode_active)
-    tlp_mode=$(tlp-stat -s 2>/dev/null | grep "Mode" | head -1 | awk '{print $NF}' || echo "unknown")
+    driver=$(get_cpu_driver)
+    balanced_gov=$(get_balanced_governor)
     idle=$(cat /tmp/idle-profile-current 2>/dev/null || echo "unknown")
 
     notify "󰕾 Estado actual" \
-        "CPU governor: $gov\nGamemode: $gm\nTLP: $tlp_mode\nIdle: $idle"
+        "CPU driver: $driver\nGovernor: $gov\nGamemode: $gm\nIdle: $idle\nBalanced gov: $balanced_gov"
 }
 
-# ── Manejo de argumento directo (para idle-profile.sh) ───────────────────────
-# Permite llamadas como: gaming-profile.sh --apply gaming
+# ── Argumento directo (para llamadas desde otros scripts) ─────────────────────
 if [[ "$1" == "--apply" ]]; then
     case "$2" in
-        gaming)     apply_gaming ;;
+        gaming)      apply_gaming ;;
         performance) apply_performance ;;
-        balanced)   apply_balanced ;;
-        powersave)  apply_powersave ;;
+        balanced)    apply_balanced ;;
+        powersave)   apply_powersave ;;
     esac
     exit 0
 fi

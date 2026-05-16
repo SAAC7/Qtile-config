@@ -37,7 +37,6 @@ ok "Usuario: $USER"
 section "Detectando hardware"
 # ------------------------------------------------------------------------------
 
-# CPU
 CPU_VENDOR=$(grep -m1 "vendor_id" /proc/cpuinfo | awk '{print $3}')
 CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | xargs)
 info "CPU: $CPU_MODEL"
@@ -76,25 +75,48 @@ GOVERNORS=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
 info "Governors disponibles: $GOVERNORS"
 
 # ------------------------------------------------------------------------------
+section "Limpiando servicios conflictivos"
+# ------------------------------------------------------------------------------
+
+# Desenmascarar TLP por si quedó enmascarado de una instalación anterior
+sudo systemctl unmask tlp.service 2>/dev/null && ok "tlp.service desnenmascarado" || true
+
+# Detener y deshabilitar conflictos antes de instalar
+for svc in power-profiles-daemon thermald; do
+    if systemctl list-unit-files | grep -q "^${svc}.service"; then
+        warn "$svc detectado — conflictúa con TLP. Deshabilitando..."
+        sudo systemctl disable --now "$svc" 2>/dev/null || true
+        # Desinstalar si está instalado
+        if pacman -Q "$svc" &>/dev/null; then
+            sudo pacman -Rns --noconfirm "$svc" 2>/dev/null || true
+            ok "$svc desinstalado"
+        else
+            ok "$svc deshabilitado"
+        fi
+    fi
+done
+
+# Limpiar unit files residuales
+sudo systemctl daemon-reload
+sudo systemctl reset-failed 2>/dev/null || true
+
+# ------------------------------------------------------------------------------
 section "Instalando TLP"
 # ------------------------------------------------------------------------------
 
-# Desinstalar thermald si existe (conflicto con TLP en Intel)
 if pacman -Q thermald &>/dev/null; then
-    warn "thermald detectado — puede conflictuar con TLP. Desinstalando..."
-    sudo pacman -R --noconfirm thermald
+    warn "thermald aún presente — eliminando..."
+    sudo pacman -Rns --noconfirm thermald
     ok "thermald eliminado"
 fi
 
-# Instalar TLP y herramientas
 info "Instalando paquetes TLP..."
 sudo pacman -S --needed --noconfirm tlp tlp-rdw
 
-# tlpui desde AUR si yay está disponible (interfaz gráfica opcional)
 if command -v yay &>/dev/null; then
     read -rp "$(echo -e "${YLW}¿Instalar tlpui (interfaz gráfica para TLP)? [s/N]: ${RST}")" INSTALL_TLPUI
     if [[ "$INSTALL_TLPUI" =~ ^[sS]$ ]]; then
-        yay -S --needed --noconfirm tlpui
+        yay -S --needed tlpui
         ok "tlpui instalado"
     fi
 fi
@@ -108,16 +130,14 @@ section "Aplicando configuración"
 CONF_SRC="$(dirname "$(realpath "$0")")/tlp.conf"
 CONF_DST="/etc/tlp.conf"
 
-# Verificar que el tlp.conf está junto al script
 if [[ ! -f "$CONF_SRC" ]]; then
     err "No se encontró tlp.conf junto a este script. Asegúrate de que ambos archivos estén en la misma carpeta."
 fi
 
-# Backup del conf anterior si existe
 if [[ -f "$CONF_DST" ]]; then
     BACKUP="/etc/tlp.conf.bak.$(date +%Y%m%d_%H%M%S)"
     sudo cp "$CONF_DST" "$BACKUP"
-    warn "Backup del config anterior guardado en: $BACKUP"
+    warn "Backup guardado en: $BACKUP"
 fi
 
 sudo cp "$CONF_SRC" "$CONF_DST"
@@ -127,7 +147,7 @@ ok "Configuración copiada a $CONF_DST"
 section "Ajustes automáticos según hardware detectado"
 # ------------------------------------------------------------------------------
 
-# Si es desktop, comentar thresholds de batería (no aplican)
+# Desktop: desactivar parámetros de batería
 if [[ "$IS_LAPTOP" == false ]]; then
     sudo sed -i 's/^START_CHARGE_THRESH/# [desktop] START_CHARGE_THRESH/' "$CONF_DST"
     sudo sed -i 's/^STOP_CHARGE_THRESH/# [desktop] STOP_CHARGE_THRESH/' "$CONF_DST"
@@ -136,32 +156,49 @@ if [[ "$IS_LAPTOP" == false ]]; then
     ok "Parámetros de batería desactivados (desktop)"
 fi
 
-# Si el governor 'schedutil' no está disponible, usar 'ondemand'
+# Governor fallback según driver y governors disponibles
+#
+# intel_pstate activo (amd-pstate-epp o intel_pstate):
+#   Solo tiene 'performance' y 'powersave'. schedutil y ondemand NO existen.
+#   En este modo, powersave + EPP balance_power ya es equivalente a schedutil.
+#
+# acpi-cpufreq / intel_pstate pasivo:
+#   Tiene schedutil, ondemand, etc.
+
 if ! echo "$GOVERNORS" | grep -q "schedutil"; then
-    sudo sed -i 's/CPU_SCALING_GOVERNOR_ON_BAT=schedutil/CPU_SCALING_GOVERNOR_ON_BAT=ondemand/' "$CONF_DST"
-    warn "schedutil no disponible — usando ondemand para BAT"
+    if [[ "$CPU_DRIVER" == "intel_pstate" ]] || [[ "$CPU_DRIVER" == "amd-pstate-epp" ]]; then
+        # Con estos drivers, powersave es el governor inteligente en BAT
+        sudo sed -i 's/^CPU_SCALING_GOVERNOR_ON_BAT=schedutil/CPU_SCALING_GOVERNOR_ON_BAT=powersave/' "$CONF_DST"
+        ok "Driver $CPU_DRIVER detectado — governor BAT: powersave (con EPP balance_power)"
+    elif echo "$GOVERNORS" | grep -q "ondemand"; then
+        sudo sed -i 's/^CPU_SCALING_GOVERNOR_ON_BAT=schedutil/CPU_SCALING_GOVERNOR_ON_BAT=ondemand/' "$CONF_DST"
+        warn "schedutil no disponible — usando ondemand para BAT"
+    else
+        # Último fallback: usar powersave
+        sudo sed -i 's/^CPU_SCALING_GOVERNOR_ON_BAT=schedutil/CPU_SCALING_GOVERNOR_ON_BAT=powersave/' "$CONF_DST"
+        warn "schedutil no disponible — usando powersave para BAT (fallback)"
+    fi
+else
+    ok "Governor BAT: schedutil"
 fi
 
 # ------------------------------------------------------------------------------
 section "Habilitando servicios"
 # ------------------------------------------------------------------------------
 
-# Deshabilitar servicios conflictivos
-for svc in power-profiles-daemon; do
-    if systemctl is-enabled "$svc" &>/dev/null; then
-        warn "$svc está activo — puede conflictuar con TLP. Deshabilitando..."
-        sudo systemctl disable --now "$svc" 2>/dev/null || true
-        ok "$svc deshabilitado"
-    fi
-done
+# Asegurarse de que tlp no esté enmascarado antes de habilitar
+sudo systemctl unmask tlp.service 2>/dev/null || true
 
 # Habilitar TLP
 sudo systemctl enable --now tlp
-sudo systemctl enable NetworkManager-dispatcher
 ok "TLP habilitado y corriendo"
 
-# Máscara rfkill para evitar conflicto con tlp-rdw
-sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
+# NetworkManager-dispatcher (para tlp-rdw)
+sudo systemctl enable --now NetworkManager-dispatcher 2>/dev/null || true
+ok "NetworkManager-dispatcher habilitado"
+
+# Enmascarar rfkill para que tlp-rdw tome el control
+sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket 2>/dev/null || true
 ok "systemd-rfkill enmascarado (tlp-rdw tomará el control)"
 
 # ------------------------------------------------------------------------------
@@ -180,15 +217,15 @@ echo ""
 ok "Instalación completada."
 echo ""
 echo -e "${BLD}Comandos útiles:${RST}"
-echo -e "  ${BLU}sudo tlp-stat -p${RST}        → estado CPU / governors / EPP"
-echo -e "  ${BLU}sudo tlp-stat -b${RST}        → estado batería y thresholds"
-echo -e "  ${BLU}sudo tlp-stat -s${RST}        → estado general del sistema"
-echo -e "  ${BLU}sudo tlp ac${RST}             → forzar modo AC manualmente"
-echo -e "  ${BLU}sudo tlp bat${RST}            → forzar modo BAT manualmente"
-echo -e "  ${BLU}sudo tlp start${RST}          → aplicar configuración actual"
+echo -e "  ${BLU}sudo tlp-stat -p${RST}   → estado CPU / governors / EPP"
+echo -e "  ${BLU}sudo tlp-stat -b${RST}   → estado batería y thresholds"
+echo -e "  ${BLU}sudo tlp-stat -s${RST}   → estado general"
+echo -e "  ${BLU}sudo tlp ac${RST}        → forzar modo AC (gaming/performance)"
+echo -e "  ${BLU}sudo tlp bat${RST}       → forzar modo BAT (powersave)"
+echo -e "  ${BLU}sudo tlp start${RST}     → devolver control automático a TLP"
 echo ""
 if [[ "$IS_LAPTOP" == true ]]; then
-    echo -e "${YLW}Recuerda verificar el soporte de thresholds de batería con:${RST}"
+    echo -e "${YLW}Verifica soporte de thresholds de batería con:${RST}"
     echo -e "  ${BLU}sudo tlp-stat -b${RST}"
     echo -e "Si no aparecen thresholds, comenta START/STOP_CHARGE_THRESH en /etc/tlp.conf"
 fi
