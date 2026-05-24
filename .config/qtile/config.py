@@ -369,7 +369,8 @@ for mon in monitors:
                         widget.Clock(format="%Y-%m-%d %a %I:%M %p",
                                         mouse_callbacks={
                                         # botón izquierdo abre gsimplecal; cámbialo si usas otra app
-                                        "Button1": lambda: qtile.cmd_spawn("gsimplecal")
+                                        "Button1": lazy.spawn("gsimplecal")
+                                        #"Button1": lazy.spawn("sh -c 'pkill -x gsimplecal || gsimplecal'")
                                         },
                                      ),
                         widget.QuickExit(),
