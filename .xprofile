@@ -1,5 +1,6 @@
-# sudo pacman -S gnome-keyring libsecret polkit-gnome seahorse
-if [ -z "$SSH_AUTH_SOCK" ]; then
-    eval $(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh 2>/dev/null)
-    export SSH_AUTH_SOCK
-fi
+# Mata cualquier instancia previa
+pkill ssh-agent 2>/dev/null
+
+# Arranca ssh-agent y guarda el socket en una ruta fija
+ssh-agent -a "$XDG_RUNTIME_DIR/ssh-agent.socket" -D &
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
