@@ -140,7 +140,7 @@ keys = [
 
     # Commands Proper
     # General
-    Key([mod], "m", lazy.spawn("rofi -show drun -show-icons "), desc="Rofi con iconos"),
+    Key([mod], "space", lazy.spawn("rofi -show drun -show-icons "), desc="Rofi con iconos"),
     
     # Capturador de pantalla scrot o flameshot
     #Key([],"Print", lazy.spawn("flameshot gui"), desc="Captura de pantalla"),
@@ -369,7 +369,7 @@ for mon in monitors:
                         widget.Clock(format="%Y-%m-%d %a %I:%M %p",
                                         mouse_callbacks={
                                         # botón izquierdo abre gsimplecal; cámbialo si usas otra app
-                                        "Button1": lambda: qtile.cmd_spawn("gsimplecal")
+                                        "Button1": lazy.spawn("gsimplecal")
                                         },
                                      ),
                         widget.QuickExit(),
@@ -393,8 +393,19 @@ for mon in monitors:
             Screen(
                 top=bar.Bar(
                     [
+
+                        widget.GroupBox(
+                            highlight_method="block",
+                            hide_unused=True,
+                            disable_drag=True,
+                            ),
                         widget.WindowTabs(),
-                        widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
+                        widget.Clock(format="%Y-%m-%d %a %I:%M %p",
+                                        mouse_callbacks={
+                                        # botón izquierdo abre gsimplecal; cámbialo si usas otra app
+                                        "Button1": lazy.spawn("gsimplecal")
+                                        },
+                                     ),
                     ],
                     24,
                 )
@@ -424,6 +435,37 @@ floating_layout = layout.Floating(
         Match(wm_class="ssh-askpass"),  # ssh-askpass
         Match(title="branchdialog"),  # gitk
         Match(title="pinentry"),  # GPG key password entry
+
+         # ── Calculadoras ──────────────────────────────
+        Match(wm_class="galculator"),
+        Match(wm_class="Galculator"),
+
+#        # ── Diálogos de sistema ───────────────────────
+#        Match(wm_class="nm-connection-editor"),
+#        Match(wm_class="Nm-connection-editor"),
+#        Match(wm_class="pavucontrol"),
+#        Match(wm_class="Pavucontrol"),
+#        Match(wm_class="blueman-manager"),
+#        Match(wm_class="Blueman-manager"),
+
+        # ── Zoom y videollamadas ──────────────────────
+        # Cubre la ventana principal Y los popups (chat, participantes, etc.)
+        Match(wm_class="zoom"),
+        Match(wm_class="Zoom"),
+        Match(title="zoom"),          # algunos popups usan título en vez de class
+
+
+        # ── Color / captura / portapapeles ───────────
+        Match(wm_class="Gpick"),
+#        Match(wm_class="copyq"),
+
+        # ── Regla universal: diálogos de cualquier app ──
+        # Esta sola cubre la mayoría de ventanas extra de Zoom, etc.
+        Match(wm_type="dialog"),
+        Match(wm_type="utility"),
+        Match(wm_type="toolbar"),
+        Match(wm_type="splash"),
+        Match(wm_type="notification"),
     ]
 )
 auto_fullscreen = True

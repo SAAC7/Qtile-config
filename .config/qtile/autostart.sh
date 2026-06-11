@@ -52,5 +52,5 @@ xss-lock --transfer-sleep-lock -- i3lock -c 000000 &
 # ── Fondo de pantalla ────────────────────────────────────────────────────────
 # Espera un momento a que xrandr aplique el layout antes de poner el fondo
 # sleep 0.5
-# feh --bg-fill ~/Pictures/optimus-prime-4k-3840-x-2160-u52qw8a3d555o7mt.webp
-nitrogen --restore
+feh --bg-fill ~/Pictures/optimus-prime-4k-3840-x-2160-u52qw8a3d555o7mt.webp &
+#nitrogen --restore
