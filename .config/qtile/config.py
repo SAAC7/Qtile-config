@@ -36,6 +36,54 @@ from libqtile import hook
 from libqtile.widget import TextBox,  Backlight,  Battery, Volume,ThermalZone, ThermalSensor, PulseVolume
 
 import sys
+import colorsys
+
+
+
+
+
+def generate_border_colors(
+    base_hex: str,
+    lightness_step: float = 0.08,
+    sat_drop: float = 0.09,
+) -> dict:
+    """
+    Genera las 4 variantes de color de borde para Qtile.
+
+    La saturación cae fuerte en COLOR_BORDER_F para que se
+    diferencie bien de F_S, pero la caída se aplana en N y N_S
+    para que no se pongan demasiado grises.
+
+        F_S  → color base (tú lo defines)
+        F    → mismo tono, -sat_drop      de saturación
+        N    → mismo tono, -sat_drop*1.35 de saturación
+        N_S  → mismo tono, -sat_drop*1.6  de saturación
+
+    Args:
+        base_hex:       Color en formato '#rrggbb'
+        lightness_step: Caída de lightness por paso (0-1)
+        sat_drop:       Caída de saturación en F (0-1)
+    """
+    base_hex = base_hex.lstrip('#')
+    r, g, b = (int(base_hex[i:i+2], 16) / 255 for i in (0, 2, 4))
+    # colorsys usa HLS (hue, lightness, saturation)
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+
+    def make(ll, ss):
+        ll = max(0.05, min(0.95, ll))
+        ss = max(0.0,  min(1.0,  ss))
+        r2, g2, b2 = colorsys.hls_to_rgb(h, ll, ss)
+        return '#{:02x}{:02x}{:02x}'.format(
+            round(r2 * 255), round(g2 * 255), round(b2 * 255))
+
+    return {
+        "B_F_S": make(l,                      s),
+        "B_F":   make(l - lightness_step*0.6, s - sat_drop),
+        "B_N":   make(l - lightness_step*1.5, s - sat_drop*0.9),
+        "B_N_S": make(l - lightness_step*2.3, s - sat_drop*1.6),
+    }
+
+
 # sys.path.insert(0, '~/PythonArch/lib/python3.11/site-packages')
 
 def has_backlight():
@@ -86,6 +134,18 @@ def get_backlight_device():
     return devices[0]
 
 
+COLOR_PRIMARY="#1459B3"
+COLORS = generate_border_colors(COLOR_PRIMARY)
+COLOR_BORDER_F_S=COLORS["B_F_S"] 
+COLOR_BORDER_F=COLORS["B_F"]
+COLOR_BORDER_N=COLORS["B_N"] 
+COLOR_BORDER_N_S=COLORS["B_N_S"] 
+
+
+# COLOR_BORDER_F_S="#81a1c1", 
+# COLOR_BORDER_F="#5e81ac", 
+# COLOR_BORDER_N="#4c566a", 
+# COLOR_BORDER_N_S="#3b4252", 
 
 mod = "mod4"
 terminal = guess_terminal()
@@ -282,10 +342,10 @@ for i in groups:
 
 layouts = [
     # layout.Columns(border_focus_stack=["#d75f5f", "#8f3d3d"], border_width=4),
-    layout.Columns(border_focus_stack="#81a1c1", 
-                   border_focus="#5e81ac", 
-                   border_normal="#4c566a", 
-                   border_normal_stack="#3b4252", 
+    layout.Columns(border_focus_stack=COLOR_BORDER_F_S, 
+                   border_focus=COLOR_BORDER_F, 
+                   border_normal=COLOR_BORDER_N, 
+                   border_normal_stack=COLOR_BORDER_N_S, 
                    margin=4,
                    border_width=3,
                 #    margin_on_single=10,
@@ -344,10 +404,22 @@ for mon in monitors:
                             highlight_method="block",
                             hide_unused=True,
                             disable_drag=True,
+                            this_current_screen_border=COLOR_PRIMARY,
+                            this_screen_border=COLOR_PRIMARY,
                             ),
                         widget.Prompt(),
                         #widget.WindowName(),
-                        widget.WindowTabs(),
+                        #widget.WindowTabs(),
+                        widget.TaskList(
+                            highlight_method="block",
+                            border=COLOR_PRIMARY,        # color ventana activa (igual que tu tema Nord)
+                            borderwidth=2,
+                            #icon_size=0,             # sin iconos, solo texto
+                            max_title_len=40,        # truncar títulos largos
+                            txt_floating="🗗 ",
+                            txt_minimized="_ ",
+                            padding=4,
+                        ),
                         widget.Chord(
                             chords_colors={
                                 "launch": ("#ff0000", "#ffffff"),
@@ -398,8 +470,21 @@ for mon in monitors:
                             highlight_method="block",
                             hide_unused=True,
                             disable_drag=True,
+                            this_current_screen_border=COLOR_PRIMARY,
+                            this_screen_border=COLOR_PRIMARY,
                             ),
-                        widget.WindowTabs(),
+                        #widget.WindowTabs(),
+                        widget.TaskList(
+                            highlight_method="block",
+                            border=COLOR_PRIMARY,        # color ventana activa (igual que tu tema Nord)
+                            #border="#5e81ac",        # color ventana activa (igual que tu tema Nord)
+                            borderwidth=2,
+                            #icon_size=5,             # sin iconos, solo texto
+                            max_title_len=40,        # truncar títulos largos
+                            txt_floating="🗗 ",
+                            txt_minimized="_ ",
+                            padding=4,
+                        ),
                         widget.Clock(format="%Y-%m-%d %a %I:%M %p",
                                         mouse_callbacks={
                                         # botón izquierdo abre gsimplecal; cámbialo si usas otra app
