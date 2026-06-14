@@ -1,3 +1,5 @@
+#sudo pacman -S gnome-keyring libsecret polkit-gnome seahorse
+
 # Mata cualquier instancia previa
 pkill ssh-agent 2>/dev/null
 
