@@ -296,7 +296,13 @@ keys = [
         lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/idle-toggle.sh")),
         desc="Idle profile: normal / descarga / película"),
  
-
+    Key([mod], "F8",
+        lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/display-menu.sh")),
+        desc="Display layout switcher"),
+    
+    Key([mod], "F7",
+        lazy.spawn(os.path.expanduser("~/.config/rofi/scripts/mic-menu.sh")),
+        desc="Mic control menu"),
 
 ]
 
