@@ -1,0 +1,49 @@
+set number relativenumber
+syntax enable
+filetype plugin indent on
+call plug#begin('/home/arch-ab/Plugins-Vim')
+
+" Plugins
+
+" Muestra los números de línea relativos
+"Plug 'vim-scripts/relativenumber'
+
+" Resaltado de sintaxis para múltiples lenguajes
+Plug 'sheerun/vim-polyglot'
+
+" Línea de estado ligera
+Plug 'itchyny/lightline.vim'
+
+" NERDTree para explorar archivos
+Plug 'preservim/nerdtree'
+
+" Autocompletado de paréntesis y corchetes
+Plug 'jiangmiao/auto-pairs'
+
+" Surround para eliminar y agregar caracteres envolventes
+Plug 'tpope/vim-surround'
+
+" Integración con Tmux
+Plug 'jpalardy/vim-slime'
+Plug 'christoomey/vim-tmux-navigator'
+
+" Snippets para diferentes lenguajes
+Plug 'honza/vim-snippets'
+
+" FZF para búsqueda eficiente
+Plug 'junegunn/fzf.vim'
+
+" Múltiples cursores
+Plug 'terryma/vim-multiple-cursors'
+
+" Mostrar cambios con Git
+Plug 'mhinz/vim-signify'
+
+" Líneas de indentación
+Plug 'Yggdroot/indentLine'
+
+" Comentarios rápidos
+Plug 'preservim/nerdcommenter'
+
+call plug#end()
+
