@@ -425,6 +425,7 @@ for mon in monitors:
                             txt_floating="🗗 ",
                             txt_minimized="_ ",
                             padding=4,
+                            filter=None,
                         ),
                         widget.Chord(
                             chords_colors={
@@ -490,6 +491,7 @@ for mon in monitors:
                             txt_floating="🗗 ",
                             txt_minimized="_ ",
                             padding=4,
+                            filter=None
                         ),
                         widget.Clock(format="%Y-%m-%d %a %I:%M %p",
                                         mouse_callbacks={

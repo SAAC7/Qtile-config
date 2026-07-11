@@ -1,3 +1,5 @@
+syntax enable
+filetype plugin indent on
 call plug#begin()
 
 " Aquí van los plugins que quieras instalar
@@ -15,8 +17,11 @@ Plug 'Yggdroot/indentLine'
 Plug 'terryma/vim-multiple-cursors' 
 " El motor de autocompletado (requiere Node.js instalado en tu sistema)
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
-" Surround para eliminar y agregar caracteres envolventes
-Plug 'tpope/vim-surround'
+" Resaltado de sintaxis para múltiples lenguajes
+Plug 'sheerun/vim-polyglot'
+" Autocompletado de paréntesis y corchetes
+Plug 'jiangmiao/auto-pairs'
+
 
 call plug#end()
 
